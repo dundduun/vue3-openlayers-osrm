@@ -3,9 +3,11 @@ import {ref} from 'vue';
 import {LineString} from "ol/geom";
 import {fromLonLat} from "ol/proj";
 
+import markerIcon from '../../public/marker.png';
+
 const center = ref(fromLonLat([13.388860, 52.517037]));
 const projection = ref('EPSG:3857');
-const zoom = ref(15);
+const zoom = ref(3);
 const rotation = ref(0);
 
 const routeGeometry = ref<LineString | null>(null);
@@ -47,11 +49,9 @@ async function plotRoute(pointsCoordinates: number[][]) {
 }
 
 // This should be transformed to coordinate arrays
-const pointsCoordinates = ref([[13.388860, 52.517037], [13.428555, 52.523219]]);
+const pointsCoordinates = ref([[13.388860, 52.517037], [13.428555, 53.523219], [13.428555, 56.523219], [13.428555, 60.523219]]);
 
 plotRoute(pointsCoordinates.value);
-
-// const coordinate = ref(fromLonLat([13.388860, 52.517037]));
 </script>
 
 <template>
@@ -79,13 +79,13 @@ plotRoute(pointsCoordinates.value);
         <ol-feature ref="featureRef">
           <ol-geom-line-string :coordinates="routeGeometry.getCoordinates()"/>
           <ol-style>
-            <ol-style-stroke color="red" :width="4"></ol-style-stroke>
+            <ol-style-stroke color="blue" :width="4"></ol-style-stroke>
           </ol-style>
         </ol-feature>
       </ol-source-vector>
     </ol-vector-layer>
 
-    <!--    use v-for for every marker      -->
+
     <div
         class="markers-container"
         v-if="pointsCoordinates.length > 0"
@@ -96,10 +96,14 @@ plotRoute(pointsCoordinates.value);
         <ol-source-vector>
           <ol-feature>
             <ol-geom-point :coordinates="fromLonLat(point)"></ol-geom-point>
+            <ol-style>
+              <ol-style-icon :src="markerIcon" :scale="0.030"></ol-style-icon>
+            </ol-style>
           </ol-feature>
         </ol-source-vector>
       </ol-vector-layer>
     </div>
+<!--    <ol-mouseposition-control />-->
   </ol-map>
 </template>
 
@@ -107,5 +111,10 @@ plotRoute(pointsCoordinates.value);
 .map {
   height: 100vh;
   width: 100vw;
+}
+
+ol-style-icon {
+  width: 10px;
+  height: auto;
 }
 </style>
