@@ -5,17 +5,24 @@ import {fromLonLat} from "ol/proj";
 
 const center = ref(fromLonLat([13.388860, 52.517037]));
 const projection = ref('EPSG:3857');
-const zoom = ref(3);
+const zoom = ref(15);
 const rotation = ref(0);
 
 const routeGeometry = ref<LineString | null>(null);
 
 const featureRef = ref(null);
 
-async function plotRoute(pointsCoordinates: string[]) {
+async function plotRoute(pointsCoordinates: number[][]) {
+  const formattedCoordinates = ref<string[]>([]);
+
+  pointsCoordinates.forEach((pointAsArray) => {
+    const pointAsString = pointAsArray[0].toString() + ',' + pointAsArray[1].toString();
+    formattedCoordinates.value.push(pointAsString);
+  })
+
   const url = ref('http://router.project-osrm.org/route/v1/driving/');
 
-  pointsCoordinates.forEach((pointCoordinates, index) => {
+  formattedCoordinates.value.forEach((pointCoordinates, index) => {
     if (index !== 0) {
       url.value += ';';
     }
@@ -40,11 +47,11 @@ async function plotRoute(pointsCoordinates: string[]) {
 }
 
 // This should be transformed to coordinate arrays
-const pointsCoordinates = ref(['13.388860,52.517037', '13.428555,52.523219']);
+const pointsCoordinates = ref([[13.388860, 52.517037], [13.428555, 52.523219]]);
 
 plotRoute(pointsCoordinates.value);
 
-const coordinate = ref(fromLonLat([10, 40]));
+// const coordinate = ref(fromLonLat([13.388860, 52.517037]));
 </script>
 
 <template>
@@ -78,30 +85,21 @@ const coordinate = ref(fromLonLat([10, 40]));
       </ol-source-vector>
     </ol-vector-layer>
 
-<!--    use v-for for every marker      -->
-    <ol-vector-layer
-      v-if="routeGeometry"
+    <!--    use v-for for every marker      -->
+    <div
+        class="markers-container"
+        v-if="pointsCoordinates.length > 0"
     >
-      <ol-source-vector>
-        <ol-feature>
-          <ol-geom-point :coordinates="coordinate"></ol-geom-point>
-        </ol-feature>
-      </ol-source-vector>
-    </ol-vector-layer>
-
-<!--    <ol-vector-layer>-->
-<!--      <ol-source-vector>-->
-<!--        <ol-feature>-->
-<!--          <ol-geom-point :coordinates="coordinate"></ol-geom-point>-->
-<!--          <ol-style>-->
-<!--            <ol-style-circle :radius="7">-->
-<!--              <ol-style-fill color="rgba(255, 0, 0, 0.8)" />-->
-<!--              <ol-style-stroke color="black" :width="2" />-->
-<!--            </ol-style-circle>-->
-<!--          </ol-style>-->
-<!--        </ol-feature>-->
-<!--      </ol-source-vector>-->
-<!--    </ol-vector-layer>-->
+      <ol-vector-layer
+          v-for="point of pointsCoordinates"
+      >
+        <ol-source-vector>
+          <ol-feature>
+            <ol-geom-point :coordinates="fromLonLat(point)"></ol-geom-point>
+          </ol-feature>
+        </ol-source-vector>
+      </ol-vector-layer>
+    </div>
   </ol-map>
 </template>
 
