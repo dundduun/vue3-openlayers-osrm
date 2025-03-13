@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import {ref} from 'vue';
 import {LineString} from "ol/geom";
+import {fromLonLat} from "ol/proj";
 
-const center = ref([40, 40]);
+const center = ref(fromLonLat([13.388860, 52.517037]));
 const projection = ref('EPSG:3857');
 const zoom = ref(3);
 const rotation = ref(0);
@@ -11,11 +12,21 @@ const routeGeometry = ref<LineString | null>(null);
 
 const featureRef = ref(null);
 
-async function fetchRoute() {
+async function plotRoute(pointsCoordinates: string[]) {
+  const url = ref('http://router.project-osrm.org/route/v1/driving/');
+
+  pointsCoordinates.forEach((pointCoordinates, index) => {
+    if (index !== 0) {
+      url.value += ';';
+    }
+
+    url.value += pointCoordinates;
+  });
+  url.value += '?overview=full&geometries=geojson';
+
   try {
-    const response = await fetch('http://router.project-osrm.org/route/v1/driving/13.388860,52.517037;13.397634,52.529407;13.428555,52.523219?overview=full&geometries=geojson');
+    const response = await fetch(url.value);
     const data = await response.json();
-    console.log(data);
 
     if (data.routes.length === 0) {
       return ('No route found');
@@ -28,7 +39,12 @@ async function fetchRoute() {
   }
 }
 
-fetchRoute();
+// This should be transformed to coordinate arrays
+const pointsCoordinates = ref(['13.388860,52.517037', '13.428555,52.523219']);
+
+plotRoute(pointsCoordinates.value);
+
+const coordinate = ref(fromLonLat([10, 40]));
 </script>
 
 <template>
@@ -45,10 +61,13 @@ fetchRoute();
         :projection="projection"
     />
 
+    <ol-tile-layer>
+      <ol-source-osm/>
+    </ol-tile-layer>
+
     <ol-vector-layer
         v-if="routeGeometry"
     >
-
       <ol-source-vector>
         <ol-feature ref="featureRef">
           <ol-geom-line-string :coordinates="routeGeometry.getCoordinates()"/>
@@ -59,17 +78,36 @@ fetchRoute();
       </ol-source-vector>
     </ol-vector-layer>
 
-    <ol-tile-layer>
-      <ol-source-osm/>
-    </ol-tile-layer>
+<!--    use v-for for every marker      -->
+    <ol-vector-layer
+      v-if="routeGeometry"
+    >
+      <ol-source-vector>
+        <ol-feature>
+          <ol-geom-point :coordinates="coordinate"></ol-geom-point>
+        </ol-feature>
+      </ol-source-vector>
+    </ol-vector-layer>
+
+<!--    <ol-vector-layer>-->
+<!--      <ol-source-vector>-->
+<!--        <ol-feature>-->
+<!--          <ol-geom-point :coordinates="coordinate"></ol-geom-point>-->
+<!--          <ol-style>-->
+<!--            <ol-style-circle :radius="7">-->
+<!--              <ol-style-fill color="rgba(255, 0, 0, 0.8)" />-->
+<!--              <ol-style-stroke color="black" :width="2" />-->
+<!--            </ol-style-circle>-->
+<!--          </ol-style>-->
+<!--        </ol-feature>-->
+<!--      </ol-source-vector>-->
+<!--    </ol-vector-layer>-->
   </ol-map>
-  <button @click="fetchRoute()">получить данные с роута</button>
 </template>
 
 <style scoped>
 .map {
-  height: 80vh;
-  width: auto;
-  object-fit: cover;
+  height: 100vh;
+  width: 100vw;
 }
 </style>
